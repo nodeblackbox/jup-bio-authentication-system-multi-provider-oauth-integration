@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  // Core fields
+  id                     String   @id @default(cuid())
+  name                   String
+  email                  String?  @unique
+  emailVerified          DateTime?
+  image                  String?
+
+  // Discord-specific fields
+  discriminator          String?
+  banner                 String?
+  accent_color           Int?
+  global_name            String?
+  avatar_decoration_data Json?
+  banner_color           String?
+  clan                   String?
+  primary_guild          String?
+  mfa_enabled            Boolean?
+  locale                 String?
+  premium_type           Int?
+  verified               Boolean?
+
+  // Twitter/X-specific fields
+  screen_name            String?
+  location               String?
+  description            String?
+  profile_image_url      String?
+  followers_count        Int?
+  friends_count          Int?
+  statuses_count         Int?
+
+  // -------------------------
+  // REDDIT-SPECIFIC FIELDS
+  // -------------------------
+
+  /// The internal Reddit user ID (e.g., '1gctg3j5cn')
+  reddit_id                  String?
+  /// The username as displayed on Reddit (e.g., 'CeeCeeJupiverse')
+  reddit_username            String?
+
+  /// Basic booleans from your logs
+  reddit_is_employee         Boolean?
+  reddit_has_visited_new_profile Boolean?
+  reddit_pref_no_profanity   Boolean?
+  reddit_has_external_account Boolean?
+  reddit_has_subscribed_to_premium Boolean?
+  reddit_can_create_subreddit Boolean?
+  reddit_is_gold             Boolean?
+  reddit_is_mod              Boolean?
+  reddit_is_sponsor          Boolean?
+  reddit_is_suspended        Boolean?
+  reddit_has_verified_email  Boolean?
+  reddit_password_set        Boolean?
+  reddit_over_18             Boolean?
+  reddit_in_redesign_beta    Boolean?
+  reddit_in_beta             Boolean?
+  reddit_pref_video_autoplay Boolean?
+  reddit_pref_nightmode      Boolean?
+  reddit_has_android_subscription Boolean?
+  reddit_has_ios_subscription     Boolean?
+  reddit_has_paypal_subscription  Boolean?
+  reddit_has_stripe_subscription  Boolean?
+  reddit_has_subscribed           Boolean?
+
+  /// Basic integers from your logs
+  reddit_coins              Int?
+  reddit_num_friends        Int?
+  reddit_link_karma         Int?
+  reddit_comment_karma      Int?
+  reddit_awarder_karma      Int?
+  reddit_awardee_karma      Int?
+  reddit_total_karma        Int?
+  reddit_inbox_count        Int?
+  reddit_pref_clickgadget   Int?
+  reddit_gold_creddits      Int?
+  reddit_created            BigInt?  // If storing Unix timestamps (e.g., 1735880836) you may prefer BigInt
+  reddit_created_utc        BigInt?
+
+  /// Extra strings from your logs
+  reddit_icon_img           String?
+  reddit_oauth_client_id    String?
+  reddit_pref_geopopular    String?  // e.g., empty or 'GLOBAL'
+  reddit_pref_show_trending Boolean?
+
+  /// Larger sub-objects in JSON
+  reddit_features  Json?  // Entire 'features' object from Reddit
+  reddit_subreddit Json?  // Entire 'subreddit' object from Reddit
+
+  // Relations
+  accounts Account[]
+  sessions Session[]
+
+  @@index([name])
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?
+  access_token       String?
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+
+  user  User @relation(fields: [userId], references: [id])
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
